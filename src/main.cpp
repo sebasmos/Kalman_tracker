@@ -238,7 +238,7 @@ int main(int argc, char ** argv)
 			// KALMAN INIT
 			//----------------------------------------------------------------------------------------------------------
 			
-			Point sec, p;
+			Point state_post, state_pre;
 			Kalman_initialization(0,0,0);
 
 			//----------------------------------------------------------------------------------------------------------
@@ -294,14 +294,34 @@ int main(int argc, char ** argv)
 				int val = biggest_blob(bloblistFiltered);				
 				//------------------------END OF BIGGEST BLOB DETECTION-----------------------------------------------------
 				float meas = 0;
+								// Plotting
+				Scalar red = Scalar (0, 0, 255);
+				Scalar blue = Scalar (255, 0, 0);
+				Scalar green = Scalar (255, 255, 0);
+				int radius= 20;
+				Mat result;
+				frame.copyTo (result);
 
 				// Make prediction when no blob is detected, meaning that if bloblist is empty, no correction is needed.
 				if (bloblistFiltered.empty()){
-					p = kalmanPredict();
-					cout << "kalman prediction: " << p.x << " " << p.y << endl;
+					state_pre = kalmanPredict();
+					cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
 					
 					cout << "No blobs detected: "<< bloblistFiltered.size() << endl;
-					
+
+					//------------------------DRAWING------------------------------------------------------
+
+					vector<Point> state_pre_vect;
+					state_pre_vect.push_back(state_pre);
+					for (Point point : state_pre_vect) {
+						circle (result,point, 5, blue, 2);
+						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), blue, 1);
+						putText(result, "state_pre_vect: ", 
+									cv::Point(10, 40),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									blue);
+					}
 				}else{
 					//cout << "index of biggest blob index: " <<  val << endl;
 					Point meas = Point(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
@@ -310,18 +330,57 @@ int main(int argc, char ** argv)
 					
 					cout<< "Measurement: " << x << " " <<y <<endl;
 					// PREDICTION
-					p = kalmanPredict();
-					cout << "kalman prediction: " << p.x << " " << p.y << endl;
+					state_pre = kalmanPredict();
+					cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
 					measurement(0) = x;
 					measurement(1) = y;
 					// CORRECTION
-					sec = kalmanCorrect(x, y);
-					cout << "kalman corrected state: " << sec.x << " " << sec.y << endl;
+					state_post = kalmanCorrect(x, y);
+					cout << "kalman corrected state (state_post): " << state_post.x << " " << state_post.y << endl;
 					//Mat estimated = KF.correct(measurement);
 					//Point statePt(estimated.at<float>(0),estimated.at<float>(1));
 					//cout << "kalman corrected state: " << statePt << endl;
-				}
 
+					//------------------------DRAWING------------------------------------------------------
+					vector<Point> measurement_vect;
+					vector<Point> state_pre_vect;
+					vector<Point> state_post_vect;
+
+					measurement_vect.push_back(meas);
+					state_pre_vect.push_back(state_pre);
+					state_post_vect.push_back(state_post);
+										//line (result, state_pre, state_pre, red, 1);
+					for (Point point : measurement_vect) {
+						circle (result,point, 5, red, 2);
+						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), red, 1);
+						putText(result, "measurement_vect: ", 
+									cv::Point(10, 10),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									red);
+					}
+					for (Point point : state_pre_vect) {
+						circle (result,point, 5, blue, 2);
+						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), blue, 1);
+						putText(result, "state_pre_vect: ", 
+									cv::Point(10, 40),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									blue);
+					}
+					for (Point point : state_post_vect) {
+						circle (result,point, 5, blue, 2);
+						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), green, 1);
+						putText(result, "state_post_vect: ", 
+									cv::Point(10, 70),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									green);
+					}
+						
+					
+				}				
+				imshow("Tracing: ", result);
 				// STATIONARY BLOBS
 				if (it==1)
 					{
@@ -355,9 +414,9 @@ int main(int argc, char ** argv)
 
 				ShowManyImages(title, 6, frame, fgmask, sfgmask,
 						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
-
+				
 				//exit if ESC key is pressed
-				if(waitKey(30) == 27) break;
+				if(waitKey(300) == 27) break;
 				//---------------------------------------------------------
 				char key = waitKey(5); // waits to display frame
 				if (key == 'q')
