@@ -24,6 +24,37 @@
 using namespace cv;
 using namespace std;
 
+
+Mat Draw_tracking(cv::Mat result, std::vector<Point> &measurement_vect){
+			
+	Scalar red = Scalar (0, 0, 255);
+	Scalar blue = Scalar (255, 0, 0);
+	Scalar green = Scalar (255, 255, 0);
+
+	Mat final_img;
+	result.copyTo(final_img);
+
+	int radius= 20;
+	//cout << "drawing: "<< measurement_vect <<endl;
+	
+					for (int i = 0; i < measurement_vect.size () - 1; i++) {
+						//cout << "drawing: "<< measurement_vect[i] <<endl;
+
+						/*
+						
+				        circle (result, measurement_vect[i], 5, red, 2);
+						line (result, measurement_vect[i], measurement_vect[i+1], red, 1);
+						putText(result, "measurement_vect: ", 
+									cv::Point(10, 10),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									red);
+						*/
+					}
+
+	return final_img;
+}
+
  Mat paintBlobImage(cv::Mat frame, std::vector<cvBlob> bloblist, bool labelled)
 {
 	cv::Mat blobImage;

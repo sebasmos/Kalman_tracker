@@ -36,6 +36,7 @@ cv::KalmanFilter KF;
 Mat_<float> measurement(2,1); 
 int type = 0;
 
+
 void Kalman_initialization (int type, float x, float y)
 {
 	if (type == 0) { // velocity
@@ -154,15 +155,27 @@ Point kalmanCorrect(float x, float y)
 }
 
 
-
 //main function
 int main(int argc, char ** argv) 
 {
+	//Point meas;
 	Mat frame; // current Frame
 	Mat fgmask; // foreground mask
 	Mat fgmask_filtered;
+	
+	int radius= 20;
+	Mat tracking_Result; // to add lines and circles
 	std::vector<cvBlob> bloblist; // list for blobs
 	std::vector<cvBlob> bloblistFiltered; // list for blobs
+
+	std::vector<Point> measurement_vect;
+	std::vector<Point> state_pre_vect;
+	std::vector<Point> state_post_vect;
+
+				
+	Scalar red = Scalar (0, 0, 255);
+	Scalar blue = Scalar (255, 0, 0);
+	Scalar green = Scalar (255, 255, 0);
 
 	// STATIONARY BLOBS
 	Mat fgmask_history; // STATIONARY foreground mask
@@ -293,38 +306,33 @@ int main(int argc, char ** argv)
 				//----------------------------------------------------------------------------------------------------------
 				int val = biggest_blob(bloblistFiltered);				
 				//------------------------END OF BIGGEST BLOB DETECTION-----------------------------------------------------
-				float meas = 0;
-								// Plotting
-				Scalar red = Scalar (0, 0, 255);
-				Scalar blue = Scalar (255, 0, 0);
-				Scalar green = Scalar (255, 255, 0);
-				int radius= 20;
-				Mat result;
-				frame.copyTo (result);
+
+				frame.copyTo(tracking_Result);
 
 				// Make prediction when no blob is detected, meaning that if bloblist is empty, no correction is needed.
 				if (bloblistFiltered.empty()){
 					state_pre = kalmanPredict();
+					state_pre_vect.push_back(state_pre);
 					cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
 					
 					cout << "No blobs detected: "<< bloblistFiltered.size() << endl;
 
 					//------------------------DRAWING------------------------------------------------------
 
-					vector<Point> state_pre_vect;
-					state_pre_vect.push_back(state_pre);
-					for (Point point : state_pre_vect) {
-						circle (result,point, 5, blue, 2);
-						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), blue, 1);
-						putText(result, "state_pre_vect: ", 
+					for (int i = 0; i < state_pre_vect.size () - 1; i++) {
+						 circle (tracking_Result, state_pre_vect[i], 5, green, 2);
+						circle (tracking_Result, state_pre_vect[i], 5, green, 2);
+						line (tracking_Result, state_pre_vect[i], state_pre_vect[i+1], green, 1);
+						putText(tracking_Result, "state_pre_vect: ", 
 									cv::Point(10, 40),
 									FONT_HERSHEY_SIMPLEX, 
 									0.5,
-									blue);
+									green);
 					}
 				}else{
 					//cout << "index of biggest blob index: " <<  val << endl;
 					Point meas = Point(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
+				
 					int x = bloblistFiltered[val].x + bloblistFiltered[val].w/2;
 					int y = bloblistFiltered[val].y + bloblistFiltered[val].h/2;
 					
@@ -342,45 +350,45 @@ int main(int argc, char ** argv)
 					//cout << "kalman corrected state: " << statePt << endl;
 
 					//------------------------DRAWING------------------------------------------------------
-					vector<Point> measurement_vect;
-					vector<Point> state_pre_vect;
-					vector<Point> state_post_vect;
-
+					// Store measurements, state_pre, state_post (Point type)
+					
 					measurement_vect.push_back(meas);
 					state_pre_vect.push_back(state_pre);
 					state_post_vect.push_back(state_post);
-										//line (result, state_pre, state_pre, red, 1);
-					for (Point point : measurement_vect) {
-						circle (result,point, 5, red, 2);
-						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), red, 1);
-						putText(result, "measurement_vect: ", 
+					
+					for (int i = 0; i < measurement_vect.size () - 1; i++) {
+				        circle (tracking_Result, measurement_vect[i], 5, red, 2);
+						line (tracking_Result, measurement_vect[i], measurement_vect[i+1], red, 1);
+						putText(tracking_Result, "measurement_vect: ", 
 									cv::Point(10, 10),
 									FONT_HERSHEY_SIMPLEX, 
 									0.5,
 									red);
-					}
-					for (Point point : state_pre_vect) {
-						circle (result,point, 5, blue, 2);
-						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), blue, 1);
-						putText(result, "state_pre_vect: ", 
+					} 
+
+					for (int i = 0; i < state_pre_vect.size () - 1; i++) {
+						 circle (tracking_Result, state_pre_vect[i], 5, green, 2);
+						circle (tracking_Result, state_pre_vect[i], 5, green, 2);
+						line (tracking_Result, state_pre_vect[i], state_pre_vect[i+1], green, 1);
+						putText(tracking_Result, "state_pre_vect: ", 
 									cv::Point(10, 40),
-									FONT_HERSHEY_SIMPLEX, 
-									0.5,
-									blue);
-					}
-					for (Point point : state_post_vect) {
-						circle (result,point, 5, blue, 2);
-						line (result, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), green, 1);
-						putText(result, "state_post_vect: ", 
-									cv::Point(10, 70),
 									FONT_HERSHEY_SIMPLEX, 
 									0.5,
 									green);
 					}
-						
+					for (int i = 0; i < state_post_vect.size () - 1; i++) {
+						 circle (tracking_Result, state_post_vect[i], 5, blue, 2);
+						circle (tracking_Result, state_post_vect[i], 5, blue, 2);
+						line (tracking_Result, state_post_vect[i], state_post_vect[i+1], blue, 1);
+						putText(tracking_Result, "state_post_vect: ", 
+									cv::Point(10, 70),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									blue);
+					}
 					
 				}				
-				imshow("Tracing: ", result);
+				//imshow("Tracing: ", result);
 				// STATIONARY BLOBS
 				if (it==1)
 					{
@@ -410,11 +418,17 @@ int main(int argc, char ** argv)
 				//SHOW RESULTS
 				//get the frame number and write it on the current frame
 
-				string title= project_name + " | Frame - FgM - Stat FgM | Blobs - Classes - Stat Classes | BlobsFil - ClassesFil - Stat ClassesFil | ("+dataset_cat[c] + "/" + baseline_seq[s] + ")";
+				string title= project_name + " | Frame - FgM - Tracking | Blobs - Classes - Stat Classes | BlobsFil - ClassesFil - Stat ClassesFil | ("+dataset_cat[c] + "/" + baseline_seq[s] + ")";
 
-				ShowManyImages(title, 6, frame, fgmask, sfgmask,
-						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
+				//ShowManyImages(title, 6, frame, fgmask, result,
+				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
+				//ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result, measurement_vect),
+				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
 				
+
+				imshow("result: ",Draw_tracking(tracking_Result, measurement_vect));
+				//imshow("d",paintBlobImage(frame,bloblistFiltered, true));
+				//Draw_tracking(cv::Mat result, vector<Point> vector_to_plot){
 				//exit if ESC key is pressed
 				if(waitKey(300) == 27) break;
 				//---------------------------------------------------------
