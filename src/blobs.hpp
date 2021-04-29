@@ -53,7 +53,7 @@ inline cvBlob initBlob(int id, int x, int y, int w, int h)
 *
 */
 // Tracking lines and circles
-Mat Draw_tracking(Mat result, std::vector<Point> &measurement_vect);
+//Mat Draw_tracking(Mat result, cv::Point_<float> measurement);
 
 //blob drawing functions
 Mat paintBlobImage(Mat frame, std::vector<cvBlob> bloblist, bool labelled);

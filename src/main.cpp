@@ -37,6 +37,84 @@ Mat_<float> measurement(2,1);
 int type = 0;
 
 
+std::vector<Point> measurement_vect;
+std::vector<Point> state_pre_vect;
+std::vector<Point> state_post_vect;
+
+//------------------------DRAWING------------------------------------------------------
+// Store measurements, state_pre, state_post (Point type)
+
+Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<float> state_pre, cv::Point_ <float> state_post  ){
+
+	//Scalar red = Scalar (0, 0, 255);
+
+	Scalar blue = Scalar (255, 0, 0);
+
+	Scalar green = Scalar (255, 255, 0);
+
+	Mat final_img;
+
+	result.copyTo(final_img);
+
+	// Store results in vectors for plotting purposes.
+	measurement_vect.push_back(measurement);
+	state_pre_vect.push_back(state_pre);
+	state_post_vect.push_back(state_post);
+
+	cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
+	cout << "kalman corrected state (state_post): " << state_post.x << " " << state_post.y << endl;
+					
+
+	//int radius= 5;
+		for (size_t i = 0; i < state_pre_vect.size () - 1; i++) {
+
+		circle (final_img, state_pre_vect[i], 5, blue, 2);
+		line (final_img, state_pre_vect[i], state_pre_vect[i+1], blue, 1);
+		putText(final_img, "state_pre_vect: ", 
+									cv::Point(10, 15),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									blue);
+	}
+		for (size_t i = 0; i < state_post_vect.size () - 1; i++) {
+
+		circle (final_img, state_post_vect[i], 5, green, 2);
+		line (final_img, state_post_vect[i], state_pre_vect[i+1], green, 1);
+		putText(final_img, "state_post_vect: ", 
+									cv::Point(10, 45),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									green);
+	}
+	//-------------------plot measurement for comparaison------------
+	/*
+	
+	for (Point point : measurement_vect) {
+
+		line (final_img, Point (point.x - radius / 2, point.y), Point (point.x + radius / 2, point.y), red, 1);
+
+		line (final_img, Point (point.x, point.y - radius / 2), Point (point.x, point.y + radius / 2), red, 1);
+
+	}
+
+	for (size_t i = 0; i < measurement_vect.size () - 1; i++) {
+
+		//cout << measurement_vect[i]<< endl;
+		//circle (final_img, measurement_vect[i], 5, red, 2);
+		line (final_img, measurement_vect[i], measurement_vect[i+1], red, 1);
+		putText(final_img, "measurement_vect: ", 
+									cv::Point(10, 10),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									red);
+	}
+	*/
+		return final_img;
+
+}
+
+
+	
 void Kalman_initialization (int type, float x, float y)
 {
 	if (type == 0) { // velocity
@@ -162,26 +240,12 @@ int main(int argc, char ** argv)
 	Mat frame; // current Frame
 	Mat fgmask; // foreground mask
 	Mat fgmask_filtered;
+	Point2f meas;
 	
 	int radius= 20;
 	Mat tracking_Result; // to add lines and circles
 	std::vector<cvBlob> bloblist; // list for blobs
 	std::vector<cvBlob> bloblistFiltered; // list for blobs
-
-	std::vector<Point> measurement_vect;
-	std::vector<Point> state_pre_vect;
-	std::vector<Point> state_post_vect;
-
-				
-	Scalar red = Scalar (0, 0, 255);
-	Scalar blue = Scalar (255, 0, 0);
-	Scalar green = Scalar (255, 255, 0);
-
-	// STATIONARY BLOBS
-	Mat fgmask_history; // STATIONARY foreground mask
-	Mat sfgmask; // STATIONARY foreground mask
-	std::vector<cvBlob> sbloblist; // list for STATIONARY blobs     
-	std::vector<cvBlob> sbloblistFiltered; // list for STATIONARY blobs
 
 	double t, acum_t; //variables for execution time
 	int t_freq = getTickFrequency();
@@ -197,10 +261,11 @@ int main(int argc, char ** argv)
 		string results_path = project_root_path+"/"+project_name+"/results";
 
 		// create directory to store results
+		/*
 		string makedir_cmd = "mkdir "+project_root_path+"/"+project_name;
 		system(makedir_cmd.c_str());
 		makedir_cmd = "mkdir "+results_path;
-		system(makedir_cmd.c_str());
+		system(makedir_cmd.c_str());*/
 
 		int NumCat = sizeof(dataset_cat)/sizeof(dataset_cat[0]); //number of categories (have faith ... it works! ;) ... each string size is 32 -at leat for the current values-)
 
@@ -312,103 +377,25 @@ int main(int argc, char ** argv)
 				// Make prediction when no blob is detected, meaning that if bloblist is empty, no correction is needed.
 				if (bloblistFiltered.empty()){
 					state_pre = kalmanPredict();
-					state_pre_vect.push_back(state_pre);
-					cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
-					
+				
 					cout << "No blobs detected: "<< bloblistFiltered.size() << endl;
 
-					//------------------------DRAWING------------------------------------------------------
-
-					for (int i = 0; i < state_pre_vect.size () - 1; i++) {
-						 circle (tracking_Result, state_pre_vect[i], 5, green, 2);
-						circle (tracking_Result, state_pre_vect[i], 5, green, 2);
-						line (tracking_Result, state_pre_vect[i], state_pre_vect[i+1], green, 1);
-						putText(tracking_Result, "state_pre_vect: ", 
-									cv::Point(10, 40),
-									FONT_HERSHEY_SIMPLEX, 
-									0.5,
-									green);
-					}
 				}else{
 					//cout << "index of biggest blob index: " <<  val << endl;
-					Point meas = Point(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
+					meas = Point2f(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
 				
 					int x = bloblistFiltered[val].x + bloblistFiltered[val].w/2;
 					int y = bloblistFiltered[val].y + bloblistFiltered[val].h/2;
 					
-					cout<< "Measurement: " << x << " " <<y <<endl;
+					//cout<< "Measurement: " << x << " " <<y <<endl;
 					// PREDICTION
 					state_pre = kalmanPredict();
-					cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
+					//cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
 					measurement(0) = x;
 					measurement(1) = y;
 					// CORRECTION
-					state_post = kalmanCorrect(x, y);
-					cout << "kalman corrected state (state_post): " << state_post.x << " " << state_post.y << endl;
-					//Mat estimated = KF.correct(measurement);
-					//Point statePt(estimated.at<float>(0),estimated.at<float>(1));
-					//cout << "kalman corrected state: " << statePt << endl;
-
-					//------------------------DRAWING------------------------------------------------------
-					// Store measurements, state_pre, state_post (Point type)
-					
-					measurement_vect.push_back(meas);
-					state_pre_vect.push_back(state_pre);
-					state_post_vect.push_back(state_post);
-					
-					for (int i = 0; i < measurement_vect.size () - 1; i++) {
-				        circle (tracking_Result, measurement_vect[i], 5, red, 2);
-						line (tracking_Result, measurement_vect[i], measurement_vect[i+1], red, 1);
-						putText(tracking_Result, "measurement_vect: ", 
-									cv::Point(10, 10),
-									FONT_HERSHEY_SIMPLEX, 
-									0.5,
-									red);
-					} 
-
-					for (int i = 0; i < state_pre_vect.size () - 1; i++) {
-						 circle (tracking_Result, state_pre_vect[i], 5, green, 2);
-						circle (tracking_Result, state_pre_vect[i], 5, green, 2);
-						line (tracking_Result, state_pre_vect[i], state_pre_vect[i+1], green, 1);
-						putText(tracking_Result, "state_pre_vect: ", 
-									cv::Point(10, 40),
-									FONT_HERSHEY_SIMPLEX, 
-									0.5,
-									green);
-					}
-					for (int i = 0; i < state_post_vect.size () - 1; i++) {
-						 circle (tracking_Result, state_post_vect[i], 5, blue, 2);
-						circle (tracking_Result, state_post_vect[i], 5, blue, 2);
-						line (tracking_Result, state_post_vect[i], state_post_vect[i+1], blue, 1);
-						putText(tracking_Result, "state_post_vect: ", 
-									cv::Point(10, 70),
-									FONT_HERSHEY_SIMPLEX, 
-									0.5,
-									blue);
-					}
-					
-				}				
-				//imshow("Tracing: ", result);
-				// STATIONARY BLOBS
-				if (it==1)
-					{
-					sfgmask = Mat::zeros(Size(fgmask.cols, fgmask.rows), CV_8UC1);
-					fgmask_history = Mat::zeros(Size(fgmask.cols, fgmask.rows), CV_32FC1);
-					}
-					
-				// Extract the STATIC blobs in fgmask
-				extractStationaryFG(fgmask, fgmask_history, sfgmask);
-				extractBlobs(sfgmask, sbloblist, connectivity);
-				//		cout << "Num STATIONARY blobs extracted=" << sbloblist.size() << endl;
-				
-			
-				removeSmallBlobs(sbloblist, sbloblistFiltered, MIN_WIDTH, MIN_HEIGHT);
-				//		cout << "Num STATIONARY small blobs removed=" << sbloblist.size()-sbloblistFiltered.size() << endl;
-
-
-				// Clasify the blobs in fgmask
-				classifyBlobs(sbloblistFiltered);
-			
+					state_post = kalmanCorrect(x, y);					
+				}			
 		
 				//Time measurement
 				t = (double)getTickCount() - t;
@@ -422,12 +409,10 @@ int main(int argc, char ** argv)
 
 				//ShowManyImages(title, 6, frame, fgmask, result,
 				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
-				ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result, measurement_vect),
-						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
+				ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result,  meas,state_pre, state_post),
+						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true));
 				
-				//imshow("result: ",Draw_tracking(tracking_Result, measurement_vect));
-				//imshow("d",paintBlobImage(frame,bloblistFiltered, true));
-				//Draw_tracking(cv::Mat result, vector<Point> vector_to_plot){
+				imshow("result: ",Draw_tracking(tracking_Result,  meas,state_pre,state_post));
 				//exit if ESC key is pressed
 				if(waitKey(300) == 27) break;
 				//---------------------------------------------------------
