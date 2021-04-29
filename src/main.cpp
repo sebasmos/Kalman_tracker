@@ -422,11 +422,10 @@ int main(int argc, char ** argv)
 
 				//ShowManyImages(title, 6, frame, fgmask, result,
 				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
-				//ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result, measurement_vect),
-				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
+				ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result, measurement_vect),
+						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
 				
-
-				imshow("result: ",Draw_tracking(tracking_Result, measurement_vect));
+				//imshow("result: ",Draw_tracking(tracking_Result, measurement_vect));
 				//imshow("d",paintBlobImage(frame,bloblistFiltered, true));
 				//Draw_tracking(cv::Mat result, vector<Point> vector_to_plot){
 				//exit if ESC key is pressed
