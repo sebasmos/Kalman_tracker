@@ -1,9 +1,17 @@
+# AVSA ball tracker
 
+## Task 3.3: 
 
+run as :
 
-INITIAL SETTING 
+ ./main /home/sebasmos/AVSA2020datasets/AVSA_Lab3_datasets/dataset_lab3
+ 
+ 
+## Comments
 
-abandonedBox_600_1000_clip.mp4: 
+### INITIAL SETTING 
+
+*abandonedBox_600_1000_clip.mp4*: 
 From this image there are a ot of false positive at the beggining of the scene, due to illumination problems probably, because there was an initial prediction pointing at a random direction, when the background was totally static. 
 
 A ciclist appears and immediatly the correction starts to work, as a reference we also have plotted in one of the windows the bounding boxes respectively, so it is possible to observe where the center will be determine. This is important to notice because the bbox determines the tracking direction.
@@ -15,7 +23,7 @@ Remarks: The blobs detector works almost good for detecting people. Therefore a 
 Then
 
 
-boats_6950_7900_clip.mp4: 
+*boats_6950_7900_clip.mp4*: 
 
 Using initial configuration without tuning: From this video there are several detected elements, considering trees, the grass, the leaves, the waves on the water. From here, we understand that the foreground extraction is not very precise, there is a lot of noise and false positives.
 
@@ -25,15 +33,13 @@ Another problem: In this sequence we count with other objects on the same image,
 
 Fix: blob tuning for big objects such as in this case, to neglect waves and too small other objects (birds, people behind the main obj, etc)
 
-pedestrians_800_1025_clip.mp4: 
+*pedestrians_800_1025_clip.mp4*: 
 
 Highly lighted image, mostly the ground. 
 
 The blobs are detecting mainly the foot or is part-based between feet and other parts of the body. 
 Thanks to the foreground segmentation we can observe where the blobs should be detected, in this case we have a shadow problem, therefore blobs are detected here and therefore the tracker fails to recognize the person until it the shadow disappears, moment at which the tracker identifies the person again, as well as the corrections.
 
-streetCornerAtNight_0_100_clip.mp4:
+*streetCornerAtNight_0_100_clip.mp4*:
 
-We have some illumniation problems, with the lighning of a motorbike and the reflection of this one onto the ground. So this illumination confuses the system and then blobs are the detected over the reflections and ultimately, the tracker also predicts points on this reflections instead of identifying the object (a motorbike)
-
-
+We have some illumniation problems, with the lighning of a motorbike and the reflection of this one onto the ground. So this illumination confuses the system and then blobs are the detected over the reflections and ultimately, the tracker also predicts points on this reflections instead of identifying the object (a motorbike

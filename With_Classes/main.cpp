@@ -34,6 +34,10 @@ using namespace std;
 #define MIN_HEIGHT 10
 
 
+std::vector<Point> measurement_vect;
+std::vector<Point> state_pre_vect;
+std::vector<Point> state_post_vect;
+
 //main function
 int main(int argc, char ** argv) 
 {
@@ -62,11 +66,11 @@ int main(int argc, char ** argv)
 		string results_path = project_root_path+"/"+project_name+"/results";
 
 		// create directory to store results
-	
+		/*
 		string makedir_cmd = "mkdir "+project_root_path+"/"+project_name;
 		system(makedir_cmd.c_str());
 		makedir_cmd = "mkdir "+results_path;
-		system(makedir_cmd.c_str());
+		system(makedir_cmd.c_str());*/
 
 		int NumCat = sizeof(dataset_cat)/sizeof(dataset_cat[0]); //number of categories (have faith ... it works! ;) ... each string size is 32 -at leat for the current values-)
 
@@ -101,11 +105,11 @@ int main(int argc, char ** argv)
 
 			//MOG2 approach
 
-            Ptr<BackgroundSubtractorMOG2>  pMOG2 = cv::createBackgroundSubtractorMOG2();
+            //Ptr<BackgroundSubtractorMOG2>  pMOG2 = cv::createBackgroundSubtractorMOG2();
 			
 			// Set threshold
-			pMOG2->setVarThreshold(16);
-			pMOG2->setHistory(50);
+			//pMOG2->setVarThreshold(16);
+			//pMOG2->setHistory(50);
 
 			//main loop
 			Mat img; // current Frame
@@ -113,12 +117,18 @@ int main(int argc, char ** argv)
 			int it=1;
 			acum_t=0;
 
+			int tipo = 0;
+
 			//----------------------------------------------------------------------------------------------------------
 			// KALMAN INIT
 			//----------------------------------------------------------------------------------------------------------
 			
 			Point state_post, state_pre;
-			KalmanFilter_ipcv::Kalman_initialization(0,0,0);
+
+			KalmanFilter_ipcv::Tracking avsa_bgs; //construct object of the bgs class
+			
+			//Tracking::Tracking();
+			avsa_bgs.Kalman_initialization(0,0,0);
 
 			//----------------------------------------------------------------------------------------------------------
 			// END KALMAN INIT
@@ -141,14 +151,14 @@ int main(int argc, char ** argv)
 				
 				// Compute fgmask
 				double learningrate=0.001;
-				pMOG2->apply(frame, fgmask, learningrate); 
+				//pMOG2->apply(frame, fgmask, learningrate); 
 				//----------------------------------------------------------------------------------------------------------
 				// APPLY FILTER
 				//----------------------------------------------------------------------------------------------------------
 				// https://docs.opencv.org/3.4/d4/d86/group__imgproc__filter.html#gac342a1bb6eabf6f55c803b09268e36dc 
-				Mat kernel = getStructuringElement(MORPH_RECT, Size(3,3)); // https://docs.opencv.org/3.4/df/d5e/samples_2cpp_2tutorial_code_2ImgProc_2Morphology_1_8cpp-example.html#a16 
+				//Mat kernel = getStructuringElement(MORPH_RECT, Size(3,3)); // https://docs.opencv.org/3.4/df/d5e/samples_2cpp_2tutorial_code_2ImgProc_2Morphology_1_8cpp-example.html#a16 
 				
-                morphologyEx(fgmask, fgmask_filtered, MORPH_OPEN , kernel);
+                //morphologyEx(fgmask, fgmask_filtered, MORPH_OPEN , kernel);
 				
 				//----------------------------------------------------------------------------------------------------------
 				// END OF FILTER
@@ -157,8 +167,8 @@ int main(int argc, char ** argv)
 				int connectivity = 8; // 4 or 8
 
 				// Extract the blobs in fgmask
-
-				extractBlobs(fgmask_filtered, bloblist, connectivity);
+				extractBlobs(fgmask, bloblist, connectivity);
+				//extractBlobs(fgmask_filtered, bloblist, connectivity);
 
 				//cout << "Old number of blobs : "<< bloblist.size() << endl;			
 				
@@ -177,27 +187,10 @@ int main(int argc, char ** argv)
 
 				// Make prediction when no blob is detected, meaning that if bloblist is empty, no correction is needed.
 				if (bloblistFiltered.empty()){
-					//state_pre = kalmanPredict();
-				
-					//cout << "No blobs detected: "<< bloblistFiltered.size() << endl;
 
 				}else{
-				/*
 					//cout << "index of biggest blob index: " <<  val << endl;
-					meas = Point2f(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
 				
-					int x = bloblistFiltered[val].x + bloblistFiltered[val].w/2;
-					int y = bloblistFiltered[val].y + bloblistFiltered[val].h/2;
-					
-					//cout<< "Measurement: " << x << " " <<y <<endl;
-					// PREDICTION
-					state_pre = kalmanPredict();
-					//cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
-					measurement(0) = x;
-					measurement(1) = y;
-					// CORRECTION
-					state_post = kalmanCorrect(x, y);	
-				*/				
 				}			
 		
 				//Time measurement
@@ -210,12 +203,13 @@ int main(int argc, char ** argv)
 
 				string title= project_name + " | Frame - FgM - Tracking | Blobs - Classes - Stat Classes | BlobsFil - ClassesFil - Stat ClassesFil | ("+dataset_cat[c] + "/" + baseline_seq[s] + ")";
 
-				//ShowManyImages(title, 6, frame, fgmask, result,
-				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
-				ShowManyImages(title, 6, frame, fgmask, KalmanFilter_ipcv::Draw_tracking(tracking_Result,  meas,state_pre, state_post),
-						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true));
+				//ShowManyImages(title, 6, frame, fgmask, fgmask,
+						//fgmask, fgmask, fgmask);
+				//ShowManyImages(title, 6, frame, fgmask, fgmask,
+				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true));
 				
-				imshow("result: ",Draw_tracking(tracking_Result,  meas,state_pre,state_post));
+				imshow("frame: ",frame);
+				//imshow("result: ",Draw_tracking(tracking_Result,  meas,state_pre,state_post));
 				//exit if ESC key is pressed
 				if(waitKey(300) == 27) break;
 				//---------------------------------------------------------

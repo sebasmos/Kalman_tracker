@@ -7,6 +7,9 @@
  * Authors: José M. Martínez (josem.martinez@uam.es), Paula Moral (paula.moral@uam.es), Juan C. San Miguel (juancarlos.sanmiguel@uam.es)
  */
 
+// dataset:
+// /home/sebasmos/AVSA2020datasets/AVSA_Lab3_datasets
+
 //system libraries C/C++
 #include <stdio.h>
 #include <iostream>
@@ -112,7 +115,6 @@ Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<floa
 		return final_img;
 
 }
-
 
 	
 void Kalman_initialization (int type, float x, float y)
@@ -236,6 +238,9 @@ Point kalmanCorrect(float x, float y)
 //main function
 int main(int argc, char ** argv) 
 {
+
+	std::cout << "dataset path " << argv[1] << "\n";
+
 	//Point meas;
 	Mat frame; // current Frame
 	Mat fgmask; // foreground mask
@@ -251,7 +256,7 @@ int main(int argc, char ** argv)
 	int t_freq = getTickFrequency();
 	int index;
 
-		string dataset_path = "/home/sebasmos/AVSA2020datasets/AVSA_Lab3_datasets"; //SET THIS DIRECTORY according to your download
+		string dataset_path = argv[1]; //"/home/sebasmos/AVSA2020datasets/AVSA_Lab3_datasets"; //SET THIS DIRECTORY according to your download
 		string dataset_cat[1] = {"dataset_lab3"};
 		string baseline_seq[1] = {"lab3.1/singleball.mp4"};
 		string image_path = "";

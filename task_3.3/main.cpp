@@ -53,7 +53,7 @@ Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<floa
 
 	Scalar blue = Scalar (255, 0, 0);
 
-	Scalar green = Scalar (255, 255, 0);
+	Scalar green = Scalar  (163, 73, 164);
 
 	Mat final_img;
 
@@ -260,7 +260,8 @@ int main(int argc, char ** argv)
 		string dataset_cat[1] = {"lab3.3"};
 	//	string baseline_seq[1] = {""};//pedestrians_800_1025_clip.mp4", "abandonedBox_600_1000_clip.mp4", "streetCornerAtNight_0_100_clip.mp4"};
 		
-		string baseline_seq[3] = {"pedestrians_800_1025_clip.mp4", "abandonedBox_600_1000_clip.mp4", "streetCornerAtNight_0_100_clip.mp4"};
+		//string baseline_seq[4] = {"abandonedBox_600_1000_clip.mp4","boats_6950_7900_clip.mp4", "pedestrians_800_1025_clip.mp4", "streetCornerAtNight_0_100_clip.mp4"};
+		string baseline_seq[1] = {"streetCornerAtNight_0_100_clip.mp4"};
 		string image_path = "";//"/input/in%06d.mp4";
 
 		string project_root_path = "/home/sebasmos/AVSA2020results"; //SET THIS DIRECTORY according to your project
@@ -288,6 +289,7 @@ int main(int argc, char ** argv)
 			//Loop for all sequence of each category
 			for (int s=0; s<NumSeq; s++ )
 			{
+			
 			VideoCapture cap;//reader to grab videoframes
 
 			//Compose full path of images
