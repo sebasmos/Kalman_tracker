@@ -1,0 +1,7 @@
+
+
+boats_6950_7900_clip.mp4: 
+
+Using initial configuration without tuning: From this video there are several detected elements, considering trees, the grass, the leaves, the waves on the water. From here, we understand that the foreground extraction is not very precise, there is a lot of noise and false positives.
+
+One of the key elements is to understand what are we intending to track. On this video, we need to track the boat, changes on kernel, blobs size and  and tuning of the foreground mask. After, the blobs must be tuned (obj = boat) with correct sizes, since from this depends the measurement and therefore the prediction task and tracking at each frame step.
