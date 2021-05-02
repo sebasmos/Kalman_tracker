@@ -44,10 +44,13 @@ std::vector<Point> measurement_vect;
 std::vector<Point> state_pre_vect;
 std::vector<Point> state_post_vect;
 
+std::vector<Point> state_pre_copy;
+std::vector<Point> state_post_copy;
+
 //------------------------DRAWING------------------------------------------------------
 // Store measurements, state_pre, state_post (Point type)
 
-Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<float> state_pre, cv::Point_ <float> state_post  ){
+Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<float> state_pre, cv::Point_ <float> state_post, bool flag  ){
 
 	//Scalar red = Scalar (0, 0, 255);
 
@@ -67,7 +70,8 @@ Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<floa
 	cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
 	cout << "kalman corrected state (state_post): " << state_post.x << " " << state_post.y << endl;
 					
-
+	if (flag!=true){
+		
 	//int radius= 5;
 		for (size_t i = 0; i < state_pre_vect.size () - 1; i++) {
 
@@ -78,7 +82,8 @@ Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<floa
 									FONT_HERSHEY_SIMPLEX, 
 									0.5,
 									blue);
-	}
+		state_pre_copy = state_pre_vect;
+		}
 		for (size_t i = 0; i < state_post_vect.size () - 1; i++) {
 
 		circle (final_img, state_post_vect[i], 5, green, 2);
@@ -88,7 +93,9 @@ Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<floa
 									FONT_HERSHEY_SIMPLEX, 
 									0.5,
 									green);
-	}
+		state_post_copy = state_post_vect;
+		}
+	
 	//-------------------plot measurement for comparaison------------
 	/*
 	
@@ -112,6 +119,32 @@ Mat Draw_tracking(cv::Mat result, cv::Point_<float> measurement, cv::Point_<floa
 									red);
 	}
 	*/
+
+	}
+	else{
+			//int radius= 5;
+		for (size_t i = 0; i < state_pre_copy.size () - 1; i++) {
+
+		circle (final_img, state_pre_copy[i], 5, blue, 2);
+		line (final_img, state_pre_copy[i], state_pre_vect[i+1], blue, 1);
+		putText(final_img, "state_pre_vect: ", 
+									cv::Point(10, 15),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									blue);
+		}
+		for (size_t i = 0; i < state_post_copy.size () - 1; i++) {
+
+		circle (final_img, state_post_copy[i], 5, green, 2);
+		line (final_img, state_post_vect[i], state_pre_vect[i+1], green, 1);
+		putText(final_img, "state_post_vect: ", 
+									cv::Point(10, 45),
+									FONT_HERSHEY_SIMPLEX, 
+									0.5,
+									green);
+		}
+		
+	}
 		return final_img;
 
 }
@@ -146,7 +179,7 @@ void Kalman_initialization (int type, float x, float y)
 													0, 1, 0, 0,
 													0, 0, 1, 1, 
 													0, 0, 0, 1); 
-		// Q MATRIX - COVARIANCE MATRIX
+		// Q MATRIX - COVARIANCE MATRIX - ERROR COVARIANCE
 		KF.processNoiseCov = (Mat_<float>(4,4) <<
 			25, 0, 0, 0,
 			0, 10, 0, 0,
@@ -155,16 +188,18 @@ void Kalman_initialization (int type, float x, float y)
 		// H MATRIX - MEASUREMENT MATRIX
 		KF.measurementMatrix = (Mat_<float>(2,4) << 1, 0, 0, 0, 
 													0, 0, 1, 0); 
-		// R MATRIX - MEASUREMENT NOISE COVARIANCE MATRIX
+		// R MATRIX - MEASUREMENT NOISE COVARIANCE MATRIX OR COVARIANCE OF OBSERVATION ERROR
 		KF.measurementNoiseCov = (Mat_<float>(2,2) <<
 												25, 0,
-												0, 25); 
+												0, 25);
+												//25, 0,
+												//0, 25); 
 		// PROCESS NOISE COVARIANCE P 
 		KF.errorCovPost = (Mat_<float>(4,4) <<
-												100000,0,0,0,
-												0,100000,0,0,
-												0,0,100000,0,
-												0,0,0,100000
+												1000000,0,0,0,
+												0,1000000,0,0,
+												0,0,1000000,0,
+												0,0,0,1000000
 												);// P Covariance 
 	}
 
@@ -182,14 +217,15 @@ void Kalman_initialization (int type, float x, float y)
 		KF.statePost.setTo(0);
 		KF.statePost.at<float>(0, 0) = x;
 		KF.statePost.at<float>(1, 0) = y;
-		 
+		// A MATRIX - TRANSITION MATRIX
 		KF.transitionMatrix = (Mat_<float>(6,6) <<
 			1, 0, 1, 0, 0.5, 0,
 			0, 1, 0, 1, 0, 0.5,
 			0, 0, 1, 0, 1, 0,
 			0, 0, 0, 1, 0, 1,
 			0, 0, 0, 0, 1, 0,
-			0, 0, 0, 0, 0, 1); // A matrix, transition matrix 
+			0, 0, 0, 0, 0, 1); 
+		// Q MATRIX - COVARIANCE MATRIX
 		KF.processNoiseCov = (Mat_<float>(6,6) <<
 				25, 0, 0, 0, 0 , 0,
 				0, 25, 0, 0, 0, 0,
@@ -220,7 +256,6 @@ void Kalman_initialization (int type, float x, float y)
 Point kalmanPredict() 
 {
     Mat prediction = KF.predict();
-	//cout <<"pred: "<<prediction<<endl;
     Point predictPt(prediction.at<float>(0),prediction.at<float>(2)); // TO CHECK: indexes for vx,vy, and x,y
     return predictPt;
 }
@@ -261,7 +296,7 @@ int main(int argc, char ** argv)
 	//	string baseline_seq[1] = {""};//pedestrians_800_1025_clip.mp4", "abandonedBox_600_1000_clip.mp4", "streetCornerAtNight_0_100_clip.mp4"};
 		
 		//string baseline_seq[4] = {"abandonedBox_600_1000_clip.mp4","boats_6950_7900_clip.mp4", "pedestrians_800_1025_clip.mp4", "streetCornerAtNight_0_100_clip.mp4"};
-		string baseline_seq[1] = {"streetCornerAtNight_0_100_clip.mp4"};
+		string baseline_seq[1] = {"abandonedBox_600_1000_clip.mp4"};
 		string image_path = "";//"/input/in%06d.mp4";
 
 		string project_root_path = "/home/sebasmos/AVSA2020results"; //SET THIS DIRECTORY according to your project
@@ -354,7 +389,7 @@ int main(int argc, char ** argv)
 				// APPLY FILTER
 				//----------------------------------------------------------------------------------------------------------
 				// https://docs.opencv.org/3.4/d4/d86/group__imgproc__filter.html#gac342a1bb6eabf6f55c803b09268e36dc 
-				Mat kernel = getStructuringElement(MORPH_RECT, Size(3,3)); // https://docs.opencv.org/3.4/df/d5e/samples_2cpp_2tutorial_code_2ImgProc_2Morphology_1_8cpp-example.html#a16 
+				Mat kernel = getStructuringElement(MORPH_RECT, Size(5,5)); // https://docs.opencv.org/3.4/df/d5e/samples_2cpp_2tutorial_code_2ImgProc_2Morphology_1_8cpp-example.html#a16 
 				
                 morphologyEx(fgmask, fgmask_filtered, MORPH_OPEN , kernel);
 				
@@ -384,28 +419,41 @@ int main(int argc, char ** argv)
 				frame.copyTo(tracking_Result);
 
 				// Make prediction when no blob is detected, meaning that if bloblist is empty, no correction is needed.
-				if (bloblistFiltered.empty()){
-					state_pre = kalmanPredict();
+				int ii = 0;
+				bool flag = false;
+									
+				meas = Point2f(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
 				
-					cout << "No blobs detected: "<< bloblistFiltered.size() << endl;
+				int x = bloblistFiltered[val].x + bloblistFiltered[val].w/2;
+				int y = bloblistFiltered[val].y + bloblistFiltered[val].h/2;
 
+				if (bloblistFiltered.empty()){
+					ii = ii+1;
+					cout << "No blobs detected: "<< bloblistFiltered.size() << endl;
+					if (ii<10){
+						state_pre = kalmanPredict();	
+						flag = false;					
+					}
+					state_pre = kalmanPredict();
+					state_pre.x = x;
+					state_pre.y = y;	
+					flag = true;	
 				}else{
-					//cout << "index of biggest blob index: " <<  val << endl;
-					meas = Point2f(bloblistFiltered[val].x + bloblistFiltered[val].w/2,  bloblistFiltered[val].y + bloblistFiltered[val].h/2); 
-				
-					int x = bloblistFiltered[val].x + bloblistFiltered[val].w/2;
-					int y = bloblistFiltered[val].y + bloblistFiltered[val].h/2;
-					
-					//cout<< "Measurement: " << x << " " <<y <<endl;
 					// PREDICTION
 					state_pre = kalmanPredict();
 					//cout << "kalman prediction (state_pre): " << state_pre.x << " " << state_pre.y << endl;
 					measurement(0) = x;
 					measurement(1) = y;
+
 					// CORRECTION
 					state_post = kalmanCorrect(x, y);					
 				}			
-		
+									
+					// if flag is true, means that no object was detected for at least 10 frames, so we are sure about the measurement, therefore make prediction = measurement
+				if (flag==true){
+					state_pre.x = x;
+					state_pre.y = y;				
+				}
 				//Time measurement
 				t = (double)getTickCount() - t;
         		        //if (_CONSOLE_DEBUG) cout << "proc. time = " << 1000*t/t_freq << " milliseconds."<< endl;
@@ -418,12 +466,12 @@ int main(int argc, char ** argv)
 
 				//ShowManyImages(title, 6, frame, fgmask, result,
 				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
-				ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result,  meas,state_pre, state_post),
+				ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result,  meas,state_pre, state_post, flag),
 						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true));
 				
-				imshow("result: ",Draw_tracking(tracking_Result,  meas,state_pre,state_post));
+				imshow("result: ",Draw_tracking(tracking_Result,  meas,state_pre,state_post, flag));
 				//exit if ESC key is pressed
-				if(waitKey(300) == 27) break;
+				if(waitKey(100) == 27) break;
 				//---------------------------------------------------------
 				char key = waitKey(5); // waits to display frame
 				if (key == 'q')

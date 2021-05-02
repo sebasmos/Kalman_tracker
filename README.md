@@ -43,3 +43,11 @@ Thanks to the foreground segmentation we can observe where the blobs should be d
 *streetCornerAtNight_0_100_clip.mp4*:
 
 We have some illumniation problems, with the lighning of a motorbike and the reflection of this one onto the ground. So this illumination confuses the system and then blobs are the detected over the reflections and ultimately, the tracker also predicts points on this reflections instead of identifying the object (a motorbike
+
+### MODIFY OEM AND KF FIXED
+*abandonedBox_600_1000_clip.mp4*: 
+
+1. Fix logic when no blobs are detected along a period of time. Threshold of 10 blobs is set using boolean flags, therefore, when no blobs are detected in more than 10 frames, then the prediction will be equal to the current measurement, because due to EOM and GMM, moving objects become stationary by running average after some few seconds, and therefore a new condition must be set to differentiaty this stationary-transition state, to avoid confusions with occlusions. 
+2. The smaller the kernel sizes, the worst the predictions, because there will be a lot of noise which will be erronously be detected as blobs, worsening the measurement and therefore the predictions and corrections, on which case, a high variance P and R would be necessary. Kernel sizes from 1 to 6 were tested, yielding kernel size 6 as the best, neglecting body-parts blobs and avoiding false positives. Also using kernel 5, there are more body-parts blobs detected on the cyclist, but the legs from a person on the top right are also detected. 
+
+
