@@ -1,13 +1,5 @@
-/* Applied Video Analysis of Sequences (AVSA)
- *
- *	LAB2: Blob detection & classification
- *	Lab2.0: Sample Opencv project
- * 
- *
- * Authors: José M. Martínez (josem.martinez@uam.es), Paula Moral (paula.moral@uam.es), Juan C. San Miguel (juancarlos.sanmiguel@uam.es)
- */
 
-// dataset:
+// Set dataset location as desired:
 // /home/sebasmos/AVSA2020datasets/AVSA_Lab3_datasets
 
 //system libraries C/C++
@@ -29,7 +21,7 @@
 
 
 //namespaces
-using namespace cv; //avoid using 'cv' to declare OpenCV functions and variables (cv::Mat or Mat)
+using namespace cv; /
 using namespace std;
 
 #define MIN_WIDTH 10
@@ -265,13 +257,6 @@ int main(int argc, char ** argv)
 		string project_name = "kalman"; //SET THIS DIRECTORY according to your project
 		string results_path = project_root_path+"/"+project_name+"/results";
 
-		// create directory to store results
-		/*
-		string makedir_cmd = "mkdir "+project_root_path+"/"+project_name;
-		system(makedir_cmd.c_str());
-		makedir_cmd = "mkdir "+results_path;
-		system(makedir_cmd.c_str());*/
-
 		int NumCat = sizeof(dataset_cat)/sizeof(dataset_cat[0]); //number of categories (have faith ... it works! ;) ... each string size is 32 -at leat for the current values-)
 
 		//Loop for all categories
@@ -412,10 +397,8 @@ int main(int argc, char ** argv)
 
 				string title= project_name + " | Frame - FgM - Tracking | Blobs - Classes - Stat Classes | BlobsFil - ClassesFil - Stat ClassesFil | ("+dataset_cat[c] + "/" + baseline_seq[s] + ")";
 
-				//ShowManyImages(title, 6, frame, fgmask, result,
-				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,sbloblistFiltered, true));
-				ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result,  meas,state_pre, state_post),
-						paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true));
+				//ShowManyImages(title, 6, frame, fgmask, Draw_tracking(tracking_Result,  meas,state_pre, state_post),
+				//		paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true), paintBlobImage(frame,bloblistFiltered, true));
 				
 				imshow("result: ",Draw_tracking(tracking_Result,  meas,state_pre,state_post));
 				//exit if ESC key is pressed
@@ -431,8 +414,6 @@ int main(int argc, char ** argv)
 	cout << it-1 << "frames processed in " << 1000*acum_t/t_freq << " milliseconds."<< endl;
 
 
-	//release all resources
-
 	cap.release();
 	destroyAllWindows();
 	waitKey(0); // (should stop till any key is pressed .. doesn't!!!!!)
@@ -441,11 +422,3 @@ int main(int argc, char ** argv)
 return 0;
 }
 
-
-/**
- * REFERENCES
- * https://www.myzhar.com/blog/tutorials/tutorial-opencv-ball-tracker-using-kalman-filter/ 
- * https://stackoverflow.com/questions/18403918/opencv-kalman-filter-prediction-without-new-observtion 
- * 
- * 
- */
